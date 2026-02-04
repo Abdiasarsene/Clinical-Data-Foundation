@@ -1,0 +1,2 @@
+class DataQualityFailure(Exception):
+    pass
