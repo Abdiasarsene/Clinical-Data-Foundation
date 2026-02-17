@@ -4,11 +4,11 @@ from monitoring.events import PipelineEvent
 from monitoring.exceptions import PipelineFailed
 from monitoring.reporter import report
 
-from ingestion.local_to_minio import (
+from ingestion.schemas.local_to_minio import (
     ensure_bucket,
     upload_directory
 )
-from ingestion.minio_to_postgres import MinioToPostgresIngestor
+from ingestion.schemas.minio_to_postgres import MinioToPostgresIngestor
 from connectors.minio.create_buckets import store_raw_data_healthcare
 from utils.config import settings
 
