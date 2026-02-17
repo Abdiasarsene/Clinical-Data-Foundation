@@ -1,16 +1,16 @@
 import time
 
-from engine.polars_engine import PolarsEngine
-from transformations.silver.clean import clean_table
-from transformations.silver.normalize import (
+from lake.engine.polars_engine import PolarsEngine
+from lake.silver.clean import clean_table
+from lake.silver.normalize import (
     normalize_strings,
     normalize_dates,
     normalize_numeric_types,
 )
-from transformations.silver.validate import (
+from lake.silver.validate import (
     validate_not_empty,
 )
-from transformations.silver.enrich_struct import (
+from lake.silver.enrich_struct import (
     add_ingestion_metadata,
     add_time_dimensions,
     add_row_fingerprint,

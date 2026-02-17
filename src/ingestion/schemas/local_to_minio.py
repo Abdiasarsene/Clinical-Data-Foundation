@@ -7,7 +7,7 @@ from logs.logger import log_event
 from connectors.minio.create_buckets import store_raw_data_healthcare
 
 # ====== CONFIGS ======
-LOCAL_BASE_DIR = "collection/files"
+LOCAL_BASE_DIR = "raw_data/files"
 BUCKET_NAME = "healthcare-raw-data"
 MINIO_PREFIX = "raw-files"
 

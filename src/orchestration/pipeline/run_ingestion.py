@@ -9,7 +9,7 @@ from ingestion.schemas.local_to_minio import (
     upload_directory
 )
 from ingestion.schemas.minio_to_postgres import MinioToPostgresIngestor
-from connectors.minio.create_buckets import store_raw_data_healthcare
+from ingestion.connectors.minio.create_buckets import store_raw_data_healthcare
 from utils.config import settings
 
 def run_ingestion():
