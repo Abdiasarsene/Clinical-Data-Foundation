@@ -1,9 +1,7 @@
-# src/pipelines/run_ingestion.py
-
+# src/orchestration/pipelines/run_ingestion.py
 from monitoring.events import PipelineEvent
 from monitoring.exceptions import PipelineFailed
 from monitoring.reporter import report
-
 from ingestion.schemas.local_to_minio import (
     ensure_bucket,
     upload_directory

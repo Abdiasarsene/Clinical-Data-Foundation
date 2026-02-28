@@ -1,7 +1,6 @@
 # src/modeling/temporal/scd.py 
 from datetime import datetime
 
-
 def apply_scd_type2(existing_record, new_record):
     """
     Close previous record and create new version.

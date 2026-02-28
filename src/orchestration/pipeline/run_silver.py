@@ -1,5 +1,5 @@
+# src/orchestration/pipeline/run_silver.py
 import time
-
 from lake.engine.polars_engine import PolarsEngine
 from lake.silver.clean import clean_table
 from lake.silver.normalize import (
@@ -21,9 +21,10 @@ from monitoring.reporter import report
 from monitoring.exceptions import PipelineFailed
 from logs.logger import get_logger
 
+# ====== LOGGING ======
 logger = get_logger("pipeline.silver.data")
 
-
+# ====== PIPELINE FOR RAW DATA TO SILVER ======
 def run():
     start_time = time.time()
     engine = PolarsEngine()
