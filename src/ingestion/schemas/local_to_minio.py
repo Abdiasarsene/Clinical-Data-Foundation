@@ -3,7 +3,7 @@ import os
 from minio import Minio
 from minio.error import S3Error
 from utils.config import settings
-from logs.logger import log_event
+from orchestration.observability.logs.logger import log_event
 from connectors.minio.create_buckets import store_raw_data_healthcare
 
 # ====== CONFIGS ======

@@ -1,3 +1,7 @@
 # Folders
 raw_data/
 data/
+great_expectations/
+
+# Files
+UNKNOWN.egg-info

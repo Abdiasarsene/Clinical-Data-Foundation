@@ -1,7 +1,8 @@
+# src/storage/lake_writer.py
 from storage.base_writer import BaseWriter
 from storage.modes import WriteMode
 
-class LakeWriter(BaseWriter):
+class SilverWriter(BaseWriter):
     """
     Technical curated layer.
     Stable schema, no business meaning.
@@ -13,7 +14,8 @@ class LakeWriter(BaseWriter):
         mode: WriteMode,
         *,
         partition_by=None,
-        metadata=None
+        metadata=None,
+        primary_keys=None,
     ):
         self._validate(df)
 

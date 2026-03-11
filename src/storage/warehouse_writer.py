@@ -1,10 +1,11 @@
+# src/storage/warehouse_writer.py
 from storage.base_writer import BaseWriter
 from storage.modes import WriteMode
 
+
 class WarehouseWriter(BaseWriter):
     """
-    Business-facing tables.
-    Strong guarantees.
+    Loads data into SQL warehouse.
     """
 
     def write(
@@ -12,20 +13,22 @@ class WarehouseWriter(BaseWriter):
         df,
         mode: WriteMode,
         *,
-        primary_keys,
+        primary_keys=None,
         partition_by=None,
-        metadata=None
+        metadata=None,
     ):
         self._validate(df)
 
-        if mode == WriteMode.MERGE and not primary_keys:
-            raise ValueError("MERGE requires primary keys")
+        pandas_df = df.to_pandas() if hasattr(df, "to_pandas") else df
 
-        self.engine.write_table(
-            df=df,
-            table=self.target,
-            mode=mode.value,
-            primary_keys=primary_keys,
-            partition_by=partition_by,
-            metadata=metadata,
+        if_exists = "append"
+
+        if mode == WriteMode.OVERWRITE:
+            if_exists = "replace"
+
+        pandas_df.to_sql(
+            name=self.target,
+            con=self.engine,
+            if_exists=if_exists,
+            index=False,
         )

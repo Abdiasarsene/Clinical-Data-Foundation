@@ -1,3 +1,4 @@
+# src/storage/modes.py
 from enum import Enum
 
 class WriteMode(str, Enum):
