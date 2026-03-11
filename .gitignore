@@ -5,3 +5,4 @@ great_expectations/
 
 # Files
 UNKNOWN.egg-info
+.env
