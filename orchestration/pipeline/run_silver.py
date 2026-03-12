@@ -21,127 +21,112 @@ from observability.monitoring.metrics import compute_row_metrics
 from observability.monitoring.reporter import report
 from observability.monitoring.exceptions import PipelineFailed
 from observability.logs.logger import get_logger
+from src.ingestion.connectors.postgres.list_bronze_tables import list_bronze_tables
 
 # ===== LOGGING =====
 logger = get_logger("pipeline.silver")
 
 # ===== SETTINGS =====
 PIPELINE_STAGE = "silver"
-DATASET = "sales"
-
-SOURCE_PATH = "lake_tabulaire/sales_raw/"
-TARGET_TABLE = "sales"
-
+BRONZE_SCHEMA = "bronze"
+SILVER_SCHEMA = "silver"
 
 # ===== RUN PIPELINE =====
 def run():
-
-    start_time = time.time()
-
     engine = PolarsEngine()
+    tables = list_bronze_tables()
+    logger.info(f"Found {len(tables)} tables in bronze schema", extra={"tables": tables})
 
-    try:
+    for dataset in tables:
+        start_time = time.time()
+        target_table = dataset  # même nom dans silver
 
-        # ===== PIPELINE START =====
-        report(PipelineEvent.START, dataset=DATASET, stage=PIPELINE_STAGE)
+        try:
+            report(PipelineEvent.START, dataset=dataset, stage=PIPELINE_STAGE)
+            logger.info(
+                f"Silver pipeline started for {dataset}",
+                extra={"dataset": dataset, "stage": PIPELINE_STAGE},
+            )
 
-        logger.info(
-            "Silver pipeline started",
-            extra={"dataset": DATASET, "stage": PIPELINE_STAGE},
-        )
+            # ===== READ =====
+            df = engine.read(f"{BRONZE_SCHEMA}.{dataset}")
+            metrics_in = compute_row_metrics(engine, df)
 
-        # ===== READ =====
-        df = engine.read(SOURCE_PATH)
+            report(
+                PipelineEvent.METRICS,
+                dataset=dataset,
+                stage=PIPELINE_STAGE,
+                rows_in=metrics_in["row_count"],
+            )
 
-        metrics_in = compute_row_metrics(engine, df)
+            # ===== VALIDATION =====
+            df = validate_not_empty(df)
 
-        report(
-            PipelineEvent.METRICS,
-            dataset=DATASET,
-            stage=PIPELINE_STAGE,
-            rows_in=metrics_in["row_count"],
-        )
+            # ===== CLEAN =====
+            df = clean_table(df)
 
-        # ===== VALIDATION =====
-        df = validate_not_empty(df)
+            # ===== NORMALIZATION =====
+            df = normalize_strings(df)
+            df = normalize_dates(df)
+            df = normalize_numeric_types(df)
 
-        # ===== CLEAN =====
-        df = clean_table(df)
+            # ===== ENRICHMENT =====
+            df = add_ingestion_metadata(df, source_name="bronze")
+            df = add_row_fingerprint(df)
+            df = add_time_dimensions(df, date_column="date")
 
-        # ===== NORMALIZATION =====
-        df = normalize_strings(df)
-        df = normalize_dates(df)
-        df = normalize_numeric_types(df)
+            # ===== METRICS OUT =====
+            metrics_out = compute_row_metrics(engine, df)
+            report(
+                PipelineEvent.METRICS,
+                dataset=dataset,
+                stage=PIPELINE_STAGE,
+                rows_out=metrics_out["row_count"],
+            )
 
-        # ===== ENRICHMENT =====
-        df = add_ingestion_metadata(df, source_name="sales_api")
-        df = add_row_fingerprint(df)
-        df = add_time_dimensions(df, date_column="date")
+            # ===== DATA QUALITY =====
+            validate_table(
+                datasource_name="lake",
+                asset_name=target_table,
+                suite_name=f"{dataset}_suite",
+            )
 
-        # ===== METRICS OUT =====
-        metrics_out = compute_row_metrics(engine, df)
+            # ===== WRITE TO SILVER =====
+            writer = WriterFactory.get_writer(
+                layer="silver",
+                engine=engine,
+                target=target_table,
+                schema=SILVER_SCHEMA,  # nouveau schema silver
+            )
 
-        report(
-            PipelineEvent.METRICS,
-            dataset=DATASET,
-            stage=PIPELINE_STAGE,
-            rows_out=metrics_out["row_count"],
-        )
+            writer.write(df, mode=WriteMode.OVERWRITE)
 
-        # ===== DATA QUALITY =====
-        validate_table(
-            datasource_name="lake",
-            asset_name=TARGET_TABLE,
-            suite_name="sales_suite",
-        )
+            duration = round(time.time() - start_time, 2)
+            report(
+                PipelineEvent.SUCCESS,
+                dataset=dataset,
+                stage=PIPELINE_STAGE,
+                duration_sec=duration,
+                rows_in=metrics_in["row_count"],
+                rows_out=metrics_out["row_count"],
+            )
 
-        # ===== WRITE USING STORAGE LAYER =====
-        writer = WriterFactory.get_writer(
-            layer="silver",
-            engine=engine,
-            target=TARGET_TABLE,
-        )
+            logger.info(
+                f"Silver pipeline finished for {dataset}",
+                extra={"dataset": dataset, "duration_sec": duration, "rows_out": metrics_out["row_count"]},
+            )
 
-        writer.write(
-            df,
-            mode=WriteMode.OVERWRITE,
-        )
-
-        duration = round(time.time() - start_time, 2)
-
-        report(
-            PipelineEvent.SUCCESS,
-            dataset=DATASET,
-            stage=PIPELINE_STAGE,
-            duration_sec=duration,
-            rows_in=metrics_in["row_count"],
-            rows_out=metrics_out["row_count"],
-        )
-
-        logger.info(
-            "Silver pipeline finished",
-            extra={
-                "dataset": DATASET,
-                "duration_sec": duration,
-                "rows_out": metrics_out["row_count"],
-            },
-        )
-
-    except Exception as e:
-
-        duration = round(time.time() - start_time, 2)
-
-        report(
-            PipelineEvent.FAILURE,
-            dataset=DATASET,
-            stage=PIPELINE_STAGE,
-            duration_sec=duration,
-            error=str(e),
-        )
-
-        logger.exception("Silver pipeline failed")
-
-        raise PipelineFailed(str(e)) from e
+        except Exception as e:
+            duration = round(time.time() - start_time, 2)
+            report(
+                PipelineEvent.FAILURE,
+                dataset=dataset,
+                stage=PIPELINE_STAGE,
+                duration_sec=duration,
+                error=str(e),
+            )
+            logger.exception(f"Silver pipeline failed for {dataset}")
+            raise PipelineFailed(str(e)) from e
 
 
 if __name__ == "__main__":

@@ -1,17 +1,27 @@
 # src/ingestion/local_to_minio.py
 import os
+import hashlib
 from minio import Minio
 from minio.error import S3Error
 from utils.config import settings
-from orchestration.observability.logs.logger import log_event
-from connectors.minio.create_buckets import store_raw_data_healthcare
+from observability.logs.logger import log_event
+from src.ingestion.connectors.minio.create_buckets import store_raw_data_healthcare
 
 # ====== CONFIGS ======
 LOCAL_BASE_DIR = "raw_data/files"
 BUCKET_NAME = "healthcare-raw-data"
 MINIO_PREFIX = "raw-files"
 
-# ====== UPLOAD DATASETS ======
+# ====== CHECK 
+def _file_md5(file_path: str) -> str:
+    """Calculer le hash MD5 d'un fichier local"""
+    hash_md5 = hashlib.md5()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+# ====== UPLOAD DIRECTORY ======
 def upload_directory(client: Minio) -> None:
     try:
         if not os.path.isdir(LOCAL_BASE_DIR):
@@ -27,32 +37,34 @@ def upload_directory(client: Minio) -> None:
                 # Chemin final dans MinIO
                 object_name = f"{MINIO_PREFIX}/{relative_path}".replace("\\", "/")
 
-                print(f"Uploading: {local_path} -> {object_name}")
+                # Vérifier si l'objet existe déjà
+                try:
+                    stat = client.stat_object(BUCKET_NAME, object_name)
+                    etag = stat.etag.strip('"')
+                    local_md5 = _file_md5(local_path)
+                    if etag == local_md5:
+                        log_event("info", f"Dataset '{object_name}' already exists with same content, skipping upload")
+                        continue
+                    else:
+                        log_event("info", f"Dataset '{object_name}' exists but content changed, updating...")
+                except S3Error:
+                    # Objet n'existe pas → upload normal
+                    pass
 
+                # Upload du fichier
                 client.fput_object(
                     bucket_name=BUCKET_NAME,
                     object_name=object_name,
                     file_path=local_path,
                 )
+                log_event("info", f"Uploaded '{object_name}' to bucket '{BUCKET_NAME}'")
+
     except Exception as e:
         log_event("error", "Import error via MinIO", str(e))
         raise e
 
-# ====== CHECK UP ======cd 
+
 def ensure_bucket(client: Minio) -> None:
     if not client.bucket_exists(BUCKET_NAME):
         client.make_bucket(BUCKET_NAME)
     log_event("info", "Bucket available")
-
-# if __name__ == "__main__":
-#     try:
-#         minio_client = store_raw_data_healthcare()
-#         ensure_bucket(minio_client)
-#         upload_directory(minio_client)
-#         print("✅ Upload completed successfully")
-
-#     except S3Error as e:
-#         print("❌ MinIO error:", e)
-
-#     except Exception as e:
-#         print("❌ Error:", e)

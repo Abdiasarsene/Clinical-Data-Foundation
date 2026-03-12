@@ -13,28 +13,25 @@ class MinioToPostgresIngestor:
         self,
         minio_client: Minio,
         pg_conn_str: str,
-        raw_schema: str = "raw"
+        bronze_schema: str = "bronze"
     ):
         self.minio = minio_client
         self.engine = create_engine(pg_conn_str)
-        self.raw_schema = raw_schema
+        self.bronze_schema = bronze_schema
 
     def ingest_bucket(self, bucket: str):
         objects = self.minio.list_objects(bucket, recursive=True)
 
         for obj in objects:
             suffix = Path(obj.object_name).suffix.lower()
-
             if suffix not in SUPPORTED_FORMATS:
                 continue  # on ignore les formats non tabulaires
-
             df = self._read_object(bucket, obj.object_name, suffix)
             table_name = self._normalize_table_name(obj.object_name)
-
             df.to_sql(
                 table_name,
                 self.engine,
-                schema=self.raw_schema,
+                schema=self.bronze_schema,
                 if_exists="replace",
                 index=False
             )
