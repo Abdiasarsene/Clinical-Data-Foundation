@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.11
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        language_version: python3.12
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.2
+    hooks:
+      - id: bandit
+        args: ["-ll", "-r", "."]
+        language_version:  python3.12
+
+  - repo: https://github.com/kalaverin/radon
+    rev: 0.2.1
+    hooks:
+      - id: radon
+        args: ["--warn-time=120", "--error-effort=2000"]
+        language_version: python3.12
