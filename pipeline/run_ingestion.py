@@ -3,7 +3,6 @@ from observability.monitoring.events import PipelineEvent
 from observability.monitoring.exceptions import PipelineFailed
 from observability.monitoring.reporter import report
 from observability.logs.logger import get_logger
-
 from src.ingestion.connectors.postgres.init_postgres import create_schemas
 from src.ingestion.schemas.local_to_minio import ensure_bucket, upload_directory
 from src.ingestion.schemas.minio_to_postgres import MinioToPostgresIngestor
@@ -57,7 +56,6 @@ def run_ingestion():
         logger.exception("Ingestion pipeline failed")
         report(PipelineEvent.FAILURE, pipeline=PIPELINE_NAME, error=str(e))
         raise PipelineFailed("Ingestion pipeline failed") from e
-
 
 if __name__ == "__main__":
     run_ingestion()

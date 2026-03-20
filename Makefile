@@ -36,3 +36,8 @@ code:
 mypy:
 	@echo "Mypy's running"
 	@mypy --config mypy.ini
+
+# Test
+test:
+	@echo "Test Unitaire"
+	@python runner.py tests/

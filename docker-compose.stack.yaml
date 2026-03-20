@@ -1,0 +1,90 @@
+services:
+  # MiniO
+  minio:
+    image: minio/minio:latest
+    container_name: de_healthcare
+    ports:
+      - "9000:9000"
+      - "9002:9002"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9002"
+    volumes:
+      - logs_data_clinical:/var/log/app
+    networks:
+      - de-clinical
+
+  # PostgreSQL (metadata + warehouse)
+  postgres:
+    image: postgres:16
+    container_name: de_healthcare_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: airflow_db   # DB par défaut
+    ports:
+      - "5432:5432"
+    volumes:
+      - logs_data_clinical:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - de-clinical
+
+  # Airflow Webserver
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    container_name: de_healthcare_airflow_webserver
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres/airflow_db
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      PYTHONPATH: /opt/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./pipelines:/opt/airflow/pipelines
+      - ./observability:/opt/airflow/observability
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "airflow db migrate &&
+      airflow users create --username admin --password admin \
+      --firstname admin --lastname admin --role Admin --email admin@example.com || true &&
+      airflow webserver"
+    networks:
+      - de-clinical
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    container_name: de_healthcare_airflow_scheduler
+    depends_on:
+      - airflow-webserver
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres/airflow_db
+      PYTHONPATH: /opt/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./pipelines:/opt/airflow/pipelines
+      - ./observability:/opt/airflow/observability
+    command: airflow scheduler
+    networks:
+      - de-clinical
+
+# Networks
+networks:
+  de-clinical:
+    driver: bridge
+
+# Volumes
+volumes:
+  logs_data_clinical:

@@ -17,5 +17,4 @@ def get_postgres_engine():
     )
 
     engine = create_engine(conn_str)
-
     return engine

@@ -1,3 +1,14 @@
+# Directories
 data/
 raw_data/
 static/
+great_expectations/
+
+# Files
+.gitignore
+.pre-commit-config.yaml
+Makefile
+mypy.ini
+REAMDE.md
+requirements.txt
+docker-compose.yaml

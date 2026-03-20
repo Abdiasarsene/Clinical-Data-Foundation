@@ -1,15 +1,32 @@
-# Dockerfile
 FROM apache/airflow:3.0.1-python3.12
 
 USER root
 
-# Copier ton code
-COPY src/ /opt/airflow/src/
-COPY dags/ /opt/airflow/dags/
-COPY requirements.txt /opt/airflow/requirements.txt
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH="/opt/airflow"
 
-# Installer toutes les dépendances
-RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
+# On reste dans le dossier Airflow
+WORKDIR /opt/airflow
 
-# Repasser en user airflow
+# Installer curl (optionnel)
+RUN apt-get update \
+    && apt-get install -y curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copier uniquement ce qu'il faut
+COPY src/ src/
+COPY observability/ observability/
+COPY pipelines/ pipelines/
+COPY dags/ dags/
+
+# Copier Poetry
+COPY pyproject.toml poetry.lock ./
+
+# Installer Poetry
+RUN pip install poetry
+
+# Installer dépendances
+RUN poetry config virtualenvs.create false \
+    && poetry install --without dev --no-root --no-interaction --no-ansi
+
 USER airflow

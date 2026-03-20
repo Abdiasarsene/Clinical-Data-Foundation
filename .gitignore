@@ -2,7 +2,10 @@
 raw_data/
 data/
 great_expectations/
+reports/
 
 # Files
 UNKNOWN.egg-info
 .env
+run_warehouse.py
+runner.py
