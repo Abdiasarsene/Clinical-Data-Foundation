@@ -1,0 +1,124 @@
+services:
+  # ======== PROMETHEUS =======
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_clinical
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - alertmanager
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - de-clinical
+    restart: unless-stopped
+
+  # ======== ALERTMANAGER ========
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager_clinical
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - de-clinical
+    restart: unless-stopped
+
+  # ======== GRAFANA =========
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_clinical
+    ports:
+      - "3010:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - de-clinical
+    restart: unless-stopped
+
+  # ========= ELASTICSEARCH =========
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    container_name: elastic_clinical
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - de-clinical
+    restart: unless-stopped
+
+  # ========= KIBANA =========
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.1
+    container_name: kibana_clinical
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - de-clinical
+    restart: unless-stopped
+
+  # ======== FILEBEAT =========
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.12.1
+    container_name: filebeat_clinical
+    user: root
+    volumes:
+      - logs_data_clinical:/app/logs:ro
+      - ./filebeat/filebeat.yaml:/usr/share/filebeat/filebeat.yml:ro
+    depends_on:
+      - elasticsearch
+    networks:
+      - de-clinical
+    restart: unless-stopped
+
+# ========= NETWORK ========
+networks:
+  de-clinical:
+    external: true
+
+# ========= VOLUMES =========
+volumes:
+  prometheus_data:
+  grafana_data:
+  es_data:
+  logs_data_clinical:
