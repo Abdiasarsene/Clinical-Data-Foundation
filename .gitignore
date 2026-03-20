@@ -13,3 +13,4 @@ UNKNOWN.egg-info
 run_warehouse.py
 runner.py
 check_services_status.py
+requirements.txt
