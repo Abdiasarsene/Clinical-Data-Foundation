@@ -19,5 +19,6 @@ def build_metadata(
         "minio_bucket": bucket,
         "minio_object": object_name,
         "ingestion_ts": datetime.utcnow(),
-        "dataset_id": md5(object_name.encode()).hexdigest()
+        # Correction : préciser que MD5 n’est pas utilisé pour la sécurité
+        "dataset_id": md5(object_name.encode(), usedforsecurity=False).hexdigest()
     }

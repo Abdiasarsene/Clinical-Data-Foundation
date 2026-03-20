@@ -1,10 +1,9 @@
-.PHONY: run_ingestion format cyclo code api
+.PHONY: run_ingestion format cyclo code test
 
 # Dossier du test
-TEST_DIR = test
-ORCHESTRATION_DIR = orchestration
-PIPELINE_DIR = orchestration/pipeline
-AIRFLOW_DIR = orchestration/airflow
+TEST_DIR = tests
+PIPELINE_DIR = pipeline
+AIRFLOW_DIR = dags
 SRC_DIR = src
 OBSERVABILITY_DIR = observability
 
@@ -18,19 +17,19 @@ run_ingestion:
 	@python runner.py
 
 # Linting + Formatage
-format:
+ruff:
 	@echo "Linting + Format"
 	@ruff check . --fix
 
 # Cyclomatic Analysis
-cyclo:
+radon:
 	@echo CC Analysis
-	@radon mi $(ORCHESTRATION_DIR)/ $(SRC_DIR)/ $(OBSERVABILITY_DIR)/ -s
+	@radon mi $(PIPELINE_DIR)/ $(SRC_DIR)/ $(OBSERVABILITY_DIR)/ $(AIRFLOW_DIR)/ $(TEST_DIR)/ -s
 
 # Code Analysis
-code:
+bandit:
 	@echo "Code Analysis"
-	@bandit -r $(ORCHESTRATION_DIR)/ $(SRC_DIR)/ $(OBSERVABILITY_DIR)/ -ll
+	@bandit -r $(PIPELINE_DIR)/ $(SRC_DIR)/ $(OBSERVABILITY_DIR)/ $(AIRFLOW_DIR)/ $(TEST_DIR)/ -ll
 
 # Mypy
 mypy:
@@ -40,4 +39,9 @@ mypy:
 # Test
 test:
 	@echo "Test Unitaire"
-	@python runner.py tests/
+	@pytest
+
+# Docker services status
+docker:
+	@echo "Docker Services status"
+	@python check_services_status.py

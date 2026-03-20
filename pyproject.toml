@@ -1,10 +1,15 @@
 [tool.poetry]
-name = "Clinical Data Foundation"
+name = "clinical-data-foundation"
 version = "0.1.0"
-description = "A production-oriented healthcare data platform designed for clinical analytics, data science, and machine learning. The project emphasizes data quality, observability, and domain-driven modeling for medical use cases."
+description = "Production-oriented healthcare data platform for clinical analytics, data science, and ML with strong data quality and observability."
 authors = ["Abdias Arsène <abdiasarsene@email.com>"]
 readme = "README.md"
-packages = [{ include = "DE_Clinical_Project" }]
+
+packages = [
+    { include = "pipeline" },
+    { include = "src" },
+    { include = "observability" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -19,13 +24,14 @@ python-json-logger = "^2.0.7"
 s3fs = "2024.6.1"
 opentelemetry-api = "1.39.1"
 opentelemetry-sdk = "1.39.1"
+opentelemetry-exporter-otlp = "1.39.1"
 minio = "7.2.9"
 requests = "2.32.3"
-opentelemetry-exporter-otlp = "1.39.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1"
 pre-commit = "^3.5"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -6,12 +6,12 @@ repos:
         args: ["--fix"]
         language_version: python3.12
 
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.2
-    hooks:
-      - id: bandit
-        args: ["-ll", "-r", "."]
-        language_version:  python3.12
+  # - repo: https://github.com/PyCQA/bandit
+  #   rev: 1.9.2
+  #   hooks:
+  #     - id: bandit
+  #       args: ["-ll", "-r", "."]
+  #       language_version:  python3.12
 
   - repo: https://github.com/kalaverin/radon
     rev: 0.2.1

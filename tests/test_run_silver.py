@@ -3,11 +3,11 @@ import pytest
 from unittest.mock import patch, MagicMock, ANY
 from pipeline.run_silver import run, PipelineFailed
 
-@patch("src.orchestration.pipelines.run_silver.list_bronze_tables")
-@patch("src.orchestration.pipelines.run_silver.PolarsEngine")
-@patch("src.orchestration.pipelines.run_silver.WriterFactory")
-@patch("src.orchestration.pipelines.run_silver.compute_row_metrics")
-@patch("src.orchestration.pipelines.run_silver.report")
+@patch("pipeline.run_silver.list_bronze_tables")
+@patch("pipeline.run_silver.PolarsEngine")
+@patch("pipeline.run_silver.WriterFactory")
+@patch("pipeline.run_silver.compute_row_metrics")
+@patch("pipeline.run_silver.report")
 def test_run_silver_success(mock_report, mock_metrics, mock_writer_factory,
                             mock_engine_cls, mock_list_tables):
     # Arrange
@@ -46,9 +46,9 @@ def test_run_silver_success(mock_report, mock_metrics, mock_writer_factory,
         rows_out=8,
     )
 
-@patch("src.orchestration.pipelines.run_silver.list_bronze_tables", return_value=["patients"])
-@patch("src.orchestration.pipelines.run_silver.PolarsEngine")
-@patch("src.orchestration.pipelines.run_silver.report")
+@patch("pipeline.run_silver.list_bronze_tables", return_value=["patients"])
+@patch("pipeline.run_silver.PolarsEngine")
+@patch("pipeline.run_silver.report")
 def test_run_silver_failure(mock_report, mock_engine_cls, mock_list_tables):
     # Arrange
     mock_engine = MagicMock()

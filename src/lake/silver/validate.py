@@ -1,6 +1,6 @@
 # src/transformations/silver/validate.py
 import polars as pl
-from typing import Dict, Iterable
+from typing import Iterable
 
 # ====== VALIDATE NOT EMPTY ======
 def validate_not_empty(df: pl.LazyFrame) -> pl.LazyFrame:

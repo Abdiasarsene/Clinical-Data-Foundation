@@ -2,7 +2,7 @@
 from storage.base_writer import BaseWriter
 from storage.modes import WriteMode
 
-class SilverWriter(BaseWriter):
+class LakeWriter(BaseWriter):
     """
     Technical curated layer.
     Stable schema, no business meaning.

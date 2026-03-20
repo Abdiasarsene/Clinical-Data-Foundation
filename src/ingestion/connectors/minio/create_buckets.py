@@ -1,7 +1,6 @@
 # connectors/minio/create_bucket.py
 import logging
 from minio import Minio
-from minio.error import S3Error
 from utils.config import settings
 
 # ====== LOGGING ======

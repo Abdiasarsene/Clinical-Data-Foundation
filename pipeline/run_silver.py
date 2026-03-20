@@ -13,8 +13,8 @@ from src.lake.silver.enrich_struct import (
     add_time_dimensions,
     add_row_fingerprint,
 )
-from storage.writer_factory import WriterFactory
-from storage.modes import WriteMode
+from src.storage.writer_factory import WriterFactory
+from src.storage.modes import WriteMode
 from src.quality.validators import validate_table
 from observability.monitoring.events import PipelineEvent
 from observability.monitoring.metrics import compute_row_metrics

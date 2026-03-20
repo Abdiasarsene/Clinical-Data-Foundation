@@ -1,6 +1,6 @@
 # orchestration/observability/monitoring/reporter.py
 from datetime import datetime
-from logs.logger import get_logger
+from observability.logs.logger import get_logger
 
 # ====== LOGGING ======
 logger = get_logger("monitoring")

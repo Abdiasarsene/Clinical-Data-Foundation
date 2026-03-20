@@ -1,7 +1,7 @@
 # src/storage/writer_factory.py
-from storage.silver_writer import LakeWriter
-from storage.modeling_writer import ModelingWriter
-from storage.warehouse_writer import WarehouseWriter
+from src.storage.lake_writer import LakeWriter
+from src.storage.modeling_writer import ModelingWriter
+from src.storage.warehouse_writer import WarehouseWriter
 
 class WriterFactory:
     @staticmethod

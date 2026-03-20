@@ -3,13 +3,13 @@ import pytest
 from unittest.mock import patch, MagicMock, ANY
 from pipeline.run_modeling import run, PipelineFailed
 
-@patch("src.orchestration.pipelines.run_modeling.PolarsEngine")
-@patch("src.orchestration.pipelines.run_modeling.WriterFactory")
-@patch("src.orchestration.pipelines.run_modeling.report")
-@patch("src.orchestration.pipelines.run_modeling.PatientEncounterRelationship")
-@patch("src.orchestration.pipelines.run_modeling.EncounterObservationRelationship")
-@patch("src.orchestration.pipelines.run_modeling.validate_temporal_order")
-@patch("src.orchestration.pipelines.run_modeling.validate_table")
+@patch("pipeline.run_modeling.PolarsEngine")
+@patch("pipeline.run_modeling.WriterFactory")
+@patch("pipeline.run_modeling.report")
+@patch("pipeline.run_modeling.PatientEncounterRelationship")
+@patch("pipeline.run_modeling.EncounterObservationRelationship")
+@patch("pipeline.run_modeling.validate_temporal_order")
+@patch("pipeline.run_modeling.validate_table")
 def test_run_modeling_success(mock_validate_table, mock_validate_temporal, mock_enc_obs_rel, mock_pat_enc_rel, mock_report, mock_writer_factory,mock_engine_cls):
     # Arrange
     mock_engine = MagicMock()
@@ -55,8 +55,8 @@ def test_run_modeling_success(mock_validate_table, mock_validate_temporal, mock_
         duration_sec=ANY,
     )
 
-@patch("src.orchestration.pipelines.run_modeling.PolarsEngine")
-@patch("src.orchestration.pipelines.run_modeling.report")
+@patch("pipeline.run_modeling.PolarsEngine")
+@patch("pipeline.run_modeling.report")
 def test_run_modeling_failure(mock_report, mock_engine_cls):
     # Arrange
     mock_engine = MagicMock()

@@ -3,19 +3,17 @@ import os
 import hashlib
 from minio import Minio
 from minio.error import S3Error
-from utils.config import settings
-from observability.logs.logger import log_event
-from src.ingestion.connectors.minio.create_buckets import store_raw_data_healthcare
+from observability.logs.logger import get_logger
 
 # ====== CONFIGS ======
 LOCAL_BASE_DIR = "raw_data/files"
 BUCKET_NAME = "healthcare-raw-data"
 MINIO_PREFIX = "raw-files"
 
-# ====== CHECK 
+# ====== CHECK ======
 def _file_md5(file_path: str) -> str:
-    """Calculer le hash MD5 d'un fichier local"""
-    hash_md5 = hashlib.md5()
+    """Calculer le hash MD5 d'un fichier local (non utilisé pour la sécurité)"""
+    hash_md5 = hashlib.md5(usedforsecurity=False)
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
@@ -43,10 +41,10 @@ def upload_directory(client: Minio) -> None:
                     etag = stat.etag.strip('"')
                     local_md5 = _file_md5(local_path)
                     if etag == local_md5:
-                        log_event("info", f"Dataset '{object_name}' already exists with same content, skipping upload")
+                        get_logger("info", f"Dataset '{object_name}' already exists with same content, skipping upload")
                         continue
                     else:
-                        log_event("info", f"Dataset '{object_name}' exists but content changed, updating...")
+                        get_logger("info", f"Dataset '{object_name}' exists but content changed, updating...")
                 except S3Error:
                     # Objet n'existe pas → upload normal
                     pass
@@ -57,14 +55,14 @@ def upload_directory(client: Minio) -> None:
                     object_name=object_name,
                     file_path=local_path,
                 )
-                log_event("info", f"Uploaded '{object_name}' to bucket '{BUCKET_NAME}'")
+                get_logger("info", f"Uploaded '{object_name}' to bucket '{BUCKET_NAME}'")
 
     except Exception as e:
-        log_event("error", "Import error via MinIO", str(e))
+        get_logger("error", "Import error via MinIO", str(e))
         raise e
 
 
 def ensure_bucket(client: Minio) -> None:
     if not client.bucket_exists(BUCKET_NAME):
         client.make_bucket(BUCKET_NAME)
-    log_event("info", "Bucket available")
+    get_logger("info", "Bucket available")

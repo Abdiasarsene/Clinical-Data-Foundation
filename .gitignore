@@ -3,6 +3,9 @@ raw_data/
 data/
 great_expectations/
 reports/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
 
 # Files
 UNKNOWN.egg-info
